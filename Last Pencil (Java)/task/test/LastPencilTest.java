@@ -4,78 +4,159 @@ import org.hyperskill.hstest.stage.StageTest;
 import org.hyperskill.hstest.testcase.CheckResult;
 import org.hyperskill.hstest.testing.TestedProgram;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class LastPencilTest extends StageTest<String> {
+
     public LastPencilTest() {
-        testData = new Object[][]{
-                {5, 1, new int[]{2, 1, 2}},
-                {20, 1, new int[]{3, 2, 3, 1, 2, 3, 3, 3}},
-                {30, 1, new int[]{3, 2, 3, 1, 2, 3, 3, 3, 2, 1, 2, 3, 2}},
-                {15, 1, new int[]{8, 7}},
-                {5, 2, new int[]{2, 1, 2}},
-                {20, 2, new int[]{3, 2, 3, 1, 2, 3, 3, 3}},
-                {30, 2, new int[]{3, 2, 3, 1, 2, 3, 3, 3, 2, 1, 2, 3, 2}},
-                {15, 2, new int[]{8, 7}},
+        test_data = new Object[][]{
+                {5, 1, new int[]{2, 1}, 2,
+                        new String[]{"4", "a", "0", "-1", "_", "|", "|||||"}, 2},
+                {20, 1, new int[]{3, 2, 3, 1, 2, 3, 3, 2}, 1,
+                        new String[]{"4", "a", "0", "-1", "_", "|", "|||||"}, 2},
+                {30, 1, new int[]{3, 2, 3, 1, 2, 3, 3, 3, 2, 3, 3}, 2,
+                        new String[]{"4", "a", "0", "-1", "_", "|", "|||||"}, 1},
+                {5, 2, new int[]{2, 1}, 2,
+                        new String[]{"4", "a", "0", "-1", "_", "|", "|||||"}, 1},
+                {20, 2, new int[]{3, 2, 3, 1, 2, 3, 3, 2}, 1,
+                        new String[]{"4", "a", "0", "-1", "_", "|", "|||||"}, 1},
+                {30, 2, new int[]{3, 2, 3, 1, 2, 3, 3, 3, 2, 3, 3}, 2,
+                        new String[]{"4", "a", "0", "-1", "_", "|", "|||||"}, 2},
         };
+        data = new String[]{"a", "_", "test", "|", "|||||", " ", "-", "two", "10g", "k5", "-0.2", "0.3"};
     }
 
     @DynamicTest
-    CheckResult checkOutput() {
+    CheckResult checkOutput() { //all comments correspond to 3 parts of tests
         TestedProgram main = new TestedProgram();
         String output = main.start().toLowerCase();
         String[] lines = output.strip().split("\\n");
-
         if (lines.length != 1 || !Pattern.matches("^(how many pencils would you like to use)\\??:?$", lines[0])) {
             return CheckResult.wrong("When the game starts, it should output only one line asking the user about the " +
                     "amount of pencils they would like to use with the \"How many pencils would you like to use\" string.");
         }
 
-        String output2 = main.execute("1").replaceAll(" ", "").toLowerCase();
+        String output2 = main.execute("1").replaceAll(" ", "");
 
-        //regex
+
         String whoWillBeRegex = "^(whowillbethefirst).*";
         String playerChecking = ".*\\([a-zA-Z_0-9]+,[a-zA-Z_0-9]+\\):?";
 
-        if (output2.split("\\n").length != 1) {  //Checking \n lines
-            return CheckResult.wrong("When the user replies with the amount of pencils, the game should print 1 non-empty " +
-                    "line asking \"Who will be the first\" player.\n"
-                    + output2.split("\n").length + " lines were found in the output.");
+        if (output2.split("\\n").length != 1) {
+            return CheckResult.wrong("When the user replies with the amount of pencils, the game should print 1 non-empty "
+                    + "line asking who will be the first player.\n"
+                    + output2.split("\\n").length + " lines were found in the output.");
         }
+        output2 = output2.toLowerCase().strip();
 
-        output2 = output2.strip();
-        // I noticed an interesting feature, this test becomes a big mystery if not used in output2 "strip"
-        // Example "!Pattern.matches(whoWillBeRegex, output2.strip())" and "!Pattern.matches(whoWillBeRegex, output2)"
-        if (!Pattern.matches(whoWillBeRegex, output2)) //Checking a task "Who will be the first"
-            return CheckResult.wrong("Discrepancy with the task, pay attention to the line" +
+        if (!Pattern.matches(whoWillBeRegex, output2))
+            return CheckResult.wrong("Discrepancy with the task, pay attention to the line " +
                     "\"Who will be the first\"");
-
-        //I think the lines "Who will be the first" still need to be checked
-        if (!Pattern.matches(playerChecking, output2)) //Checking line "(Name1, Name2)")
+        if (!Pattern.matches(playerChecking, output2))
             return CheckResult.wrong("Discrepancy with the task, output example" +
                     " \"Who will be the first (Name1, Name2):\"");
         return CheckResult.correct();
     }
 
+    String[] data;
 
-    Object[][] testData; // array for testing
-
-
-    @DynamicTest(data = "testData")
-    CheckResult checkResult(int amount, int first, int[] moves) {
-
-        //Started tests
+    @DynamicTest(data = "data")
+    CheckResult checkNumericAmount(String inp) {
         TestedProgram main = new TestedProgram();
         main.start();
-        String output2 = main.execute(String.valueOf(amount));
-        output2 = output2.replace(" ", "");
-        //Get names for tests
-        String leftName = output2.substring(output2.lastIndexOf('(') + 1, output2.lastIndexOf(','));
-        String rightName = output2.substring(output2.lastIndexOf(',') + 1, output2.lastIndexOf(')'));
-//Name change block for tests [start]
+        String output = main.execute(inp).toLowerCase();
+
+        if (!output.contains("number of pencils") || !output.contains("numeric")) {
+            return CheckResult.wrong("When the user provides the number of pencils as a non-numeric sequence, the game should " + "inform the user that their input is incorrect and prompt the user for input again" + " with the \"The number of pencils should be numeric\" string.");
+        }
+        for (int i = 1; i < 5; i++) {
+            if (!output.contains("number of pencils") || !output.contains("numeric")) {
+                return CheckResult.wrong("When the user provides the number of pencils as a non-numeric sequence, the game should " + "inform the user that their input is incorrect and prompt the user for input again" + " with the \"The number of pencils should be numeric\" string.");
+            }
+
+        }
+        return CheckResult.correct();
+    }
+
+
+    @DynamicTest
+    CheckResult checkNotZeroAmount() { //the test matches the name (checking positive)
+        TestedProgram main = new TestedProgram();
+        main.start();
+        String output = main.execute("0").toLowerCase();
+
+        if (!output.contains("number of pencils") || !output.contains("positive")) {
+            return CheckResult.wrong("When the user provides \"0\" as a number of pencils, the game should " + "inform the user that their input is incorrect and prompt the user for input again" + " with the \"The number of pencils should be positive\" string.");
+        }
+        for (int i = 1; i < 5; i++) {
+            output = main.execute("0").toLowerCase();
+            if (!output.contains("number of pencils") || !output.contains("positive")) {
+                return CheckResult.wrong("When the user provides \"0\" as a number of pencils, the game should " + "inform the user that their input is incorrect and prompt the user for input again" + " with the \"The number of pencils should be positive\" string.");
+            }
+        }
+        return CheckResult.correct();
+    }
+
+    @DynamicTest
+    CheckResult checkBothAmount() {
+        TestedProgram main = new TestedProgram();
+        main.start();
+
+        String output = main.execute("0").toLowerCase(); // again, task checking "The number of pencils should be positive"
+        if (!output.contains("number of pencils") || !output.contains("positive")) {
+            return CheckResult.wrong("When the user provides \"0\" as a number of pencils," +
+                    " the game should inform the user that their input is incorrect and prompt " +
+                    "the user for input again with the \"The number of pencils should be positive\" string.");
+        }
+
+        output = main.execute("a").toLowerCase();// task checking "The number of pencils should be numeric"
+        if (!output.contains("number of pencils") || !output.contains("numeric")) {
+            return CheckResult.wrong("When the user provides the number of pencils as " +
+                    "a non-numeric sequence, the game should inform the user that their " +
+                    "input is incorrect and prompt the user for input again with the " +
+                    "\"The number of pencils should be numeric\" string.");
+        }
+
+        output = main.execute("0").toLowerCase(); // checking positive in loop
+        if (!output.contains("number of pencils") || !output.contains("positive")) {
+            return CheckResult.wrong("When the user provides \"0\" as a number of pencils," +
+                    " the game should inform the user that their input is incorrect and" +
+                    " prompt the user for input again with the \"The number of pencils " +
+                    "should be positive\" string.");
+        }
+        String output2 = main.execute("1").replaceAll(" ", "").strip();
+        if (!Pattern.matches(".*\\([a-zA-Z_0-9]+,[a-zA-Z_0-9]+\\):?", output2)) { // checking task conditions after correct pencils choice "who will be the first player"
+            return CheckResult.wrong("When the user inputs the number of pencils correctly," +
+                    " the game should ask who will be the first player ending with the \"(\"Name1\", \"Name2\")\" string.");
+        }
+
+        return CheckResult.correct();
+    }
+
+    Object[][] test_data;// more extensive array for tests
+
+
+    @DynamicTest(data = "test_data")
+    CheckResult checkResult(int amount, int first, int[] moves, int last, String[] incorrect, int winner) {
+// amount - number of pencils, first - player's turn, moves - number of operations, last - who was the last, incorrect - chars arrays for testing, winner - this winner ^_^
+        TestedProgram main = new TestedProgram();
+        main.start();
+        String output = main.execute(String.valueOf(amount));
+        output = output.replace(" ", "");
+
+        if (!output.toLowerCase().contains("who") || !output.toLowerCase().contains("first")) { //Checking who first
+            return CheckResult.wrong("The game should ask the user to input the player that goes first.");
+        }
+        // Getting names
+        String leftName = output.substring(output.lastIndexOf('(') + 1, output.lastIndexOf(','));
+        String rightName = output.substring(output.lastIndexOf(',') + 1, output.lastIndexOf(')'));
+        // Checking names
+        if (leftName.equals(rightName)) { //Checking player name1 != name2
+            return CheckResult.wrong("The names of the players must be different," +
+                    " lines were found in the output: Name1 - \""
+                    + leftName + "\" Name2 - \"" + rightName + "\".");
+        }
         String prevPlayer, nextPlayer;
         if (first == 1) {
             prevPlayer = leftName;
@@ -84,137 +165,131 @@ public class LastPencilTest extends StageTest<String> {
             prevPlayer = rightName;
             nextPlayer = leftName;
         }
-//Name change block for tests [Finish]
+
+        String output2 = main.execute(leftName + rightName).toLowerCase();
+
+        String format = String.format("When the user provides a name that is not '%s' or '%s'," +
+                " the game should inform the user that their input is incorrect " +
+                "and prompt the user for input again with the " +
+                "\"Choose between '%s' and '%s'\" string.", leftName, rightName, leftName, rightName);
+        if (!output2.contains("choose between") || !output2.contains(leftName.toLowerCase()) || !output2.contains(rightName.toLowerCase())) {
+            return CheckResult.wrong(format); // Checking task "choose between"
+        }
+        for (int j = 1; j < 5; j++) { //Checking for loop stability
+            output2 = main.execute(leftName + rightName).toLowerCase();
+            if (!output2.contains("choose between") || !output2.contains(leftName.toLowerCase()) || !output2.contains(rightName.toLowerCase())) {
+                return CheckResult.wrong(format);
+            }
+        }
+        //nonempty lines checking
         String output3 = main.execute(prevPlayer).toLowerCase();
-
-        String[] lines = output3.trim().split("\\n"); //Creates an array for checking "\n"
-        List<String> linesNonEmpty = Arrays.stream(lines).filter(s -> s.length() != 0).collect(Collectors.toList()); //Creates a list for checking empty lines
-
-//NEW TEST
-        if (leftName.equals(rightName)) { //Checking player name1 != name2
-            return CheckResult.wrong("The names of the players must be different," +
-                    " lines were found in the output: Name1 - \""
-                    + leftName + "\" Name2 - \"" + rightName + "\".");
-        }
-//END NEW TEST
-        if (linesNonEmpty.size() != 2) {  //Checking Name` turn
-            return CheckResult.wrong("When the player provides the initial game conditions"
-                    + ", your program should print 2 non-empty lines:\n"
+        String[] lines = output3.strip().split("\\r?\\n");
+        List<String> linesNonEmpty = Arrays.stream(lines).filter(s -> s.length() != 0).toList();
+        if (linesNonEmpty.size() != 2) { // checking a start task, program should print 2 non-empty lines
+            return CheckResult.wrong("When the player provides the initial game conditions, your program should print 2 non-empty lines:\n"
                     + "one with with vertical bar symbols representing the number of pencils, "
-                    + "the other with the \"Name` turn\" string.\n"
-                    + linesNonEmpty.size() + " lines were found in the output.");
+                    + "the other with the \"*NameX* turn\" " +
+                    "string.\n" + String.format("%d lines were found in the output.", linesNonEmpty.size()));
         }
+        //checking lines with pencils
+        String[] checkPencils = Arrays.stream(lines).filter(s -> s.contains("|")).toArray(String[]::new);
 
-        List<String> checkPencils = Arrays.stream(lines).filter(s -> s.contains("|")).toList(); //Create list lines containing | for testing
-        if (checkPencils.size() == 0) { // Checking how many pencils are in a line
-            return CheckResult.wrong("When the player provides the initial game conditions"
-                    + ", your program should print one line with several vertical bar "
-                    + "symbols ('|') representing pencils.");
+        if (checkPencils.length == 0) { // checking initial game
+            return CheckResult.wrong("When the player provides the initial game conditions, your program should print one line with several vertical bar symbols ('|') representing pencils.");
         }
-        if (checkPencils.size() > 1) { //Checking how many lines with pencils
-            return CheckResult.wrong("When the player provides the initial game conditions"
-                    + ", your program should print only one line with several vertical bar "
-                    + "symbols ('|') representing pencils.");
+        if (checkPencils.length > 1) { // checking if lines with pencils > 1
+            return CheckResult.wrong("When the player provides the game initial conditions, your program should print only one line with several vertical bar symbols ('|') representing pencils.");
         }
-//        if (new HashSet<>(checkPencils.get(0).chars().mapToObj(c -> (char) c).collect(Collectors.toList())).size() != 1) {
-        // distinct() makes it possible to get the number of non-unique elements, thus getting 2, the test fails
-        if (checkPencils.get(0).chars().distinct().count() != 1) {
+        if (checkPencils[0].chars().distinct().count() != 1) { // checking any chars except |
             return CheckResult.wrong("The line with pencils should not contain any symbols other than the '|' symbol.");
         }
 
-        if (checkPencils.get(0).length() != amount) { //Checking for compliance with the amount transferred by the player | Characters
+
+        if (checkPencils[0].length() != amount) { // checking matching the entered characters and the characters on the output
             return CheckResult.wrong("The line with pencils should contain as many '|' symbols as the player provided.");
         }
 
-        boolean checkTurn = false;
-        for (String line : lines) {//Validation variable for compliance with the selected player
-            if (line.toLowerCase().contains(prevPlayer.toLowerCase()) && line.contains("turn")) {
-                checkTurn = true;
-                break;
+
+        if (!lines[1].matches(prevPlayer + "|.+turn!?$")) { //checking player and task "turn"
+            return CheckResult.wrong("When the player provides the correct initial game conditions"
+                    + " there should be a line in the output for "
+                    + prevPlayer + "'s turn that contains " + "\""
+                    + prevPlayer + "\" and \"turn\" substrings if '"
+                    + prevPlayer + "' is the " + "first player.");
+        }
+
+
+        int onTable = amount;
+//start checking task  possible values 1 2 3
+        for (var i : moves) {
+            for (String j : incorrect) {
+                output = main.execute(j).toLowerCase();
+                if (!output.contains("possible values") || !output.contains("1") || !output.contains("2") || !output.contains("3")) { // checking "Possible values: '1', '2', '3'" and re-entry requirement
+                    return CheckResult.wrong("If the player enters values different from '1', '2', or '3'," + " the game should inform the user that " +
+                            "their input is incorrect and prompt the user for input again" + " with the \"Possible values: '1', '2', '3'\" string.");
+                }
+                if (!output.toLowerCase().contains(prevPlayer.toLowerCase()) && output.toLowerCase().contains(nextPlayer.toLowerCase())) {// check in case the request for re-entry has not been received
+                    return CheckResult.wrong("When " + prevPlayer + " provides values different from '1', '2', or '3'," + " you need to prompt "
+                            + prevPlayer + " for input again.\n" + "However, the " + nextPlayer + "'s name was found in your output.");
+                }
             }
-        }
 
-        if (!checkTurn) { //Checking for compliance with the selected player
-            return CheckResult.wrong("When the player provides the initial game conditions"
-                    + " there should be a line in output that contains the \""
-                    + prevPlayer + "'s turn\""
-                    + " string if " + prevPlayer + " is the first player.");
-        }
-
-        int onTable = amount; // Pencils amount
-
-        for (int i : moves) {
             onTable -= i;
-            String output = main.execute(String.valueOf(i)).toLowerCase();
-            lines = output.trim().split("\\n");
-            linesNonEmpty = Arrays.stream(lines).filter(s -> //Fill in with non-empty lines for check.
-                    s.length() != 0).collect(Collectors.toList());
-
-            if (onTable <= 0) { //Checking the output after the last pencil has been taken
-                if (linesNonEmpty.size() != 0) {
-                    return CheckResult.wrong("After the last pencil is taken," +
-                            " there should be no output.");
-                } else {
-                    break;
-                }
-            }
-
-            if (linesNonEmpty.size() != 2) { //Check for eligibility, for non-empty lines after player selection
-                return CheckResult.wrong("When one of the players enters the amount " +
-                        "of pencils they want to remove, your program should print" +
-                        " 2 non-empty lines.");
-            }
+            output = main.execute(String.valueOf(i)).toLowerCase();
+        }// nonempty checking
+        lines = output.trim().split("\n");
+        linesNonEmpty = List.of(Arrays.stream(lines).toArray(String[]::new));
 
 
-            checkPencils = Arrays.stream(lines).filter(s ->
-                    s.contains("|")).collect(Collectors.toList()); //Creating List that contains output with | in a row
-// Checking line contains | [start]
-            if (checkPencils.size() == 0) {
-                return CheckResult.wrong("When one of the players enters the amount " +
-                        "of pencils they want to remove, "
-                        + "your program should print one line with vertical bar" +
-                        " symbols ('|') representing pencils.");
-            }
-            if (checkPencils.size() > 1) {
-                return CheckResult.wrong("When one of the players enters the amount " +
-                        "of pencils they want to remove, "
-                        + "your program should print only one line with vertical" +
-                        " bar symbols ('|') representing pencils.");
-            }
-            if (!checkPencils.get(0).replaceAll("\\|", "").isEmpty()) {
-                return CheckResult.wrong("The line with pencils should not contain any" +
-                        " symbols other than the '|' symbol.");
-            }
-            if (checkPencils.get(0).length() != onTable) {
-                return CheckResult.wrong("When one of the players enters the amount of" +
-                        " pencils they want to remove, "
-                        + "the line with pencils should contain as many '|' symbols " +
-                        "as there are pencils left.");
-            }
-// Checking line contains | [finish]
-
-            checkTurn = false;
-            for (String line : lines) { // Creating boolean variable to check for presence in a string "NAME turn"
-                if (line.toLowerCase().contains(nextPlayer.toLowerCase()) && line.contains("turn")) {
-                    checkTurn = true;
-                    break;
-                }
-            }
-            if (!checkTurn) {
-                return CheckResult.wrong(// Player rotation match checks
-                        String.format("When %s enters the amount of pencils " +
-                                "they want to remove, " +
-                                "there should be a line in the output " +
-                                "that contains \"%s turn\".", prevPlayer, nextPlayer));
-            }
-            String temp = prevPlayer;
-            prevPlayer = nextPlayer;
-            nextPlayer = temp;
-
+        if (linesNonEmpty.size() != 2) {// checking after player choice "if != 2 nonempty lines"
+            return CheckResult.wrong("When one of the players enters the number of pencils they want to remove," + " the program should print 2 non-empty lines.");
         }
-        if (!main.isFinished()) {//Checking, if conditions print, but the program then sends a request
-            return CheckResult.wrong("Your program should not request " +
-                    "anything when there are no pencils left.");
+
+        checkPencils = Arrays.stream(lines).filter(s -> s.contains("|")).toArray(String[]::new);
+        if (checkPencils.length == 0) {//checking pencils in lines
+            return CheckResult.wrong("When one of the players enters the amount of pencils they want to remove, your program should print one line with vertical bar symbols ('|') representing pencils.");
+        }
+        if (checkPencils.length > 1) {//checking if lines with pencils > 1 after player choice
+            return CheckResult.wrong("When one of the players enters the amount of pencils they want to remove" + ", your program should print only one line with vertical bar symbols ('|') representing pencils.");
+        }
+        if (checkPencils[0].chars().distinct().count() != 1) {//checking any chars except |
+            return CheckResult.wrong("The line with pencils should not contain any symbols other than the '|' symbol.");
+        }
+        if (checkPencils[0].length() != onTable) {//checking pencils in lines after player choice
+            return CheckResult.wrong("When one of the players enters the amount of pencils they want to remove, " + "the line with pencils should contain as many '|' symbols as there are pencils left.");
+        }
+
+        if (!lines[1].matches(nextPlayer + "|.+turn!?$")) { // add regex checking player and turn
+            return CheckResult.wrong(String.format("When %s enters the amount of pencils they want to remove"
+                    + " there should be a line in output that contains \"%s turn\".", prevPlayer, nextPlayer));
+        }
+
+        output = main.execute(Integer.toString(last + 1)).toLowerCase();
+        if (!output.contains("too many") || !output.contains("pencils")) { // checking condition if player choice pencils  "1 > | < 3"
+            return CheckResult.wrong("If the player enters the number of pencils that is greater than the current " + "number of pencils on the table, the game should inform the user that " + "their input is incorrect and prompt the user for input again " + "with the \"too many pencils\" string.");
+        }
+
+        output = main.execute(String.valueOf(last)).toLowerCase();
+        lines = output.trim().split("\\n");
+//start getWinner checking
+        linesNonEmpty = List.of(Arrays.stream(lines).filter(s -> s.length() != 0).toArray(String[]::new));
+        String winnerName = "";
+        if (winner == 1) {
+            winnerName = leftName;
+        }
+        if (winner == 2) {
+            winnerName = rightName;
+        }
+        if (linesNonEmpty.size() != 1 || !linesNonEmpty.get(0).toLowerCase().contains(winnerName.toLowerCase()) || (!linesNonEmpty.get(0).contains("win") && !linesNonEmpty.get(0).contains("won"))) {
+            if (linesNonEmpty.size() >= 1) {// checking if winner choices not correct
+                if (!linesNonEmpty.get(0).toLowerCase().contains(winnerName.toLowerCase()) && (linesNonEmpty.get(0).contains("win") || linesNonEmpty.get(0).contains("won"))) {
+                    return CheckResult.wrong("Make sure you determined the winner of the game correctly.\n" + "The player who takes the last pencil loses the game.");
+                }
+            }//checking correct writing lines with winner
+            return CheckResult.wrong("When the last pencil is taken, the program should print one line that informs " + "who is the winner in this game with \"*Name*\" and \"win\"/\"won\" strings.");
+        }
+        if (!main.isFinished()) {//checking output after the game is finished
+            return CheckResult.wrong("Your program should not request anything when there are no pencils left.");
         }
         return CheckResult.correct();
     }
