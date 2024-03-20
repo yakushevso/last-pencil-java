@@ -19,27 +19,33 @@ public class Main {
             int tempPencils;
 
             while (true) {
-                tempPencils = getPencilInput();
-
-                if (tempPencils <= nPencils) {
-                    break;
+                if (currentPlayer.equals(name2)) {
+                    tempPencils = getBestPencilChoice(nPencils);
+                    System.out.println(tempPencils);
+                } else {
+                    tempPencils = getPencilInput();
                 }
 
+                if (tempPencils <= nPencils) break;
                 System.out.println("Too many pencils were taken");
             }
 
             nPencils = nPencils - tempPencils;
 
             currentPlayer = currentPlayer.equals(name1) ? name2 : name1;
+
             if (nPencils <= 0) {
                 break;
             }
 
             System.out.println(pencilString(nPencils));
-
         }
 
         System.out.println(currentPlayer + " won");
+    }
+
+    private static int getBestPencilChoice(int nPencils) {
+        return (nPencils - 1) % 4 == 0 ? 1 : (nPencils - 1) % 4;
     }
 
     private static int getPencilInput() {
