@@ -9,15 +9,33 @@ public class Main {
             String name2 = "Jack";
             System.out.println("How many pencils would you like to use:");
 
-            int numberOfPencils = sc.nextInt();
+            int nPencils = sc.nextInt();
             sc.nextLine();
 
             System.out.println("Who will be the first (" + name1 + ", " + name2 + "):");
-            String firstPlayer = sc.next();
 
-            String pencilStr = new String(new char[numberOfPencils]).replace("\0", "|");
+            String currentPlayer = "Jack";
+            if (sc.next().equals("John")) {
+                currentPlayer = "John";
+            }
 
-            System.out.println(pencilStr + "\n" + firstPlayer + "is going first!");
+            System.out.println(pencilString(nPencils));
+
+            while (true) {
+                System.out.println(currentPlayer + "'s turn:");
+                nPencils = nPencils - sc.nextInt();
+
+                if (nPencils <= 0) {
+                    break;
+                }
+
+                System.out.println(pencilString(nPencils));
+                currentPlayer = currentPlayer.equals("John") ? "Jack" : "John";
+            }
         }
+    }
+
+    static String pencilString(int n) {
+        return new String(new char[n]).replace("\0", "|");
     }
 }
