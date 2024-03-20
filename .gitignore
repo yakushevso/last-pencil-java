@@ -1,0 +1,20 @@
+# course config files
+*.yaml
+
+# gradle
+.gradle/
+/gradle/
+/gradlew
+/gradlew.bat
+build
+out
+
+# idea config
+.idea
+
+# stages
+/Last Pencil (Java)/Empty the pencil case/
+/Last Pencil (Java)/New rules/
+/Last Pencil (Java)/Working on the gameplay/
+/Last Pencil (Java)/Fair play/
+/Last Pencil (Java)/The right strategy/
